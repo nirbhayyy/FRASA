@@ -55,3 +55,6 @@ htmlcov/
 # =========================
 mlruns/
 wandb/
+
+# Django static files
+staticfiles/
