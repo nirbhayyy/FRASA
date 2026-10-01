@@ -1,24 +1,25 @@
 # FRASA — Fake Review Detection & Sentiment Analysis
 
-FRASA is a machine learning based web application that detects fake
-reviews and performs sentiment analysis on review text.
+FRASA is a machine learning powered web application for analyzing online reviews.
 
-The application integrates trained NLP and machine learning models
-with a Django web application to provide review classification,
-sentiment prediction, confidence scores, and review analytics.
+The application combines **fake review detection** and **sentiment analysis** with a Django-based web interface. Users can submit review text and receive a prediction along with confidence information and sentiment analysis.
+
+---
 
 ## 🚀 Features
 
-- Fake review detection
-- Genuine/fake classification
-- Sentiment analysis
-- Prediction confidence
-- Review history
-- Dashboard and analytics
-- User authentication
-- Django REST API
-- Machine learning model integration
-- NLP-based text preprocessing
+- 🔍 Fake review detection
+- ✅ Genuine/Fake review classification
+- 😊 Sentiment analysis
+- 📊 Prediction confidence
+- 📈 Review analytics dashboard
+- 📝 Review history
+- 👤 User authentication
+- 🔌 Django REST API
+- 🤖 Machine learning model integration
+- 🧹 NLP-based text preprocessing
+
+---
 
 ## 🧠 Machine Learning
 
@@ -30,25 +31,43 @@ The project experiments with multiple machine learning algorithms:
 - Random Forest
 - XGBoost
 - Support Vector Machine
-- Ensemble model
+- Ensemble Model
 
 ### Sentiment Analysis
 
-The project uses machine learning models for sentiment classification,
-including:
+The sentiment analysis component uses:
 
 - Multinomial Naive Bayes
-- Linear SVC
+- Linear Support Vector Classifier (LinearSVC)
 
 ### NLP Techniques
 
-- Text preprocessing
+The text processing pipeline includes:
+
+- Text cleaning
 - Lowercasing
 - Stopword removal
 - Stemming
 - Bag of Words
 - TF-IDF
 - N-gram features
+
+---
+
+## 📊 Model Performance
+
+The following results were obtained during model evaluation:
+
+| Model | Accuracy |
+|---|---:|
+| Logistic Regression | 87.38% |
+| Random Forest | 85.52% |
+| XGBoost | 85.37% |
+| Support Vector Machine | 87.83% |
+
+> Model performance can vary depending on the dataset, preprocessing pipeline, train/test split, and evaluation configuration.
+
+---
 
 ## 🛠️ Tech Stack
 
@@ -58,14 +77,13 @@ including:
 - Django
 - Django REST Framework
 
-### Machine Learning
+### Machine Learning & NLP
 
 - Scikit-learn
 - Pandas
 - NumPy
 - NLTK
 - XGBoost
-- Joblib
 
 ### Frontend
 
@@ -78,23 +96,36 @@ including:
 
 - SQLite
 
-## 📂 Project Structure
+### Development & Model Management
+
+- Git
+- Git LFS
+- Jupyter Notebooks
+
+---
+
+## 🏗️ Project Architecture
 
 ```text
-FRASA/
-│
-├── FAKEreview/
-│   ├── Analyzer/
-│   ├── api/
-│   ├── FAKEreview/
-│   ├── ml_models/
-│   └── manage.py
-│
-├── notebooks/
-│   ├── review_model.ipynb
-│   └── sentiment_model.ipynb
-│
-├── .gitattributes
-├── .gitignore
-├── README.md
-└── requirements.txt
+User
+  │
+  ▼
+Django Web Interface
+  │
+  ▼
+Django REST API
+  │
+  ├───────────────┐
+  ▼               ▼
+Fake Review     Sentiment
+Detection       Analysis
+  │               │
+  ▼               ▼
+ML Models       ML Model
+  │               │
+  └───────┬───────┘
+          ▼
+     Prediction
+          │
+          ▼
+     Dashboard
