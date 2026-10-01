@@ -1,0 +1,121 @@
+/* ===== BASIC RESET ===== */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: white;
+}
+
+/* ===== NAVBAR ===== */
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: #020617;
+}
+
+header a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+.logo {
+    font-weight: bold;
+}
+
+/* ===== HERO ===== */
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 80px 40px;
+    gap: 40px;
+    align-items: center;
+}
+
+.hero h1 {
+    font-size: 40px;
+}
+
+.hero p {
+    color: #cbd5f5;
+}
+
+.btn {
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-right: 10px;
+}
+
+.btn-primary {
+    background: #6366f1;
+    color: white;
+}
+
+.btn-secondary {
+    border: 1px solid white;
+    color: white;
+}
+
+/* ===== DEMO CARD ===== */
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.bar {
+    height: 6px;
+    background: #6366f1;
+    margin: 5px 0;
+}
+
+/* ===== FEATURES ===== */
+.section {
+    padding: 60px 40px;
+    text-align: center;
+}
+
+.features {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.feature {
+    background: #1e293b;
+    padding: 20px;
+    width: 250px;
+    border-radius: 10px;
+}
+
+/* ===== FOOTER ===== */
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #020617;
+}
+
+.hero {
+    background-image: url('/static/images/hero-bg.jpg'); /* your image path */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+/* Dark overlay so text stays readable */
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 20, 40, 0.62);
+    z-index: 0;
+}
+
+/* Push hero content above the overlay */
+.hero > * {
+    position: relative;
+    z-index: 1;
+}

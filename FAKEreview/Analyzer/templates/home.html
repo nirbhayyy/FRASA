@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRASA</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="anim-slidein-top">
+    <div class="logo">FRASA</div>
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'history' %}">History</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+    </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+
+    <div class="anim-fadein-left">
+        <h1>Detect Fake Reviews & Analyze Sentiment</h1>
+        <p>AI-powered system to detect fake reviews and understand sentiment instantly.</p>
+
+        <a href="{% url 'check_review' %}" class="btn btn-primary">🚀 Try Now</a>
+        <a href="{% url 'register' %}" class="btn btn-secondary">Create Account</a>
+    </div>
+
+    <div class="card anim-fadein-right">
+        <p><b>Sample Review:</b></p>
+        <p>"Best product ever!!! Must buy!!!"</p>
+
+        <p>Fake Detection: ⚠️ FAKE</p>
+        <div class="bar" style="width:90%"></div>
+
+        <p>Sentiment: 😊 Positive</p>
+        <div class="bar" style="width:85%"></div>
+    </div>
+
+</section>
+
+<!-- FEATURES -->
+<section class="section">
+    <h2>Features</h2>
+
+    <div class="features">
+        <div class="feature anim-fadein-up">
+            <h3>🕵️ Fake Detection</h3>
+            <p>Detect fake or genuine reviews using ML.</p>
+        </div>
+
+        <div class="feature anim-fadein-up anim-delay-1">
+            <h3>🎭 Sentiment Analysis</h3>
+            <p>Analyze positive or negative sentiment.</p>
+        </div>
+
+        <div class="feature anim-fadein-up anim-delay-2">
+            <h3>📊 History</h3>
+            <p>Track all your previous predictions.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <p>© 2026 FRASA</p>
+</footer>
+
+</body>
+</html>

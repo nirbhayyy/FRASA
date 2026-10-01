@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — FRASA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+
+    <style>
+       
+    </style>
+</head>
+
+<body>
+
+<div class="login-wrap">
+
+    <a href="/" class="login-brand">
+        <div class="logo-icon">🔍</div>
+        <span class="logo-text">FRASA</span>
+    </a>
+
+    <div class="card">
+
+        <div class="login-heading">
+            <h1>Create an <span class="gradient-text">account</span></h1>
+            <p>Join FRASA and start detecting fake reviews instantly.</p>
+        </div>
+
+        <!-- ✅ Backend error -->
+        {% if error %}
+        <div class="form-error">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- ✅ IMPORTANT: enctype added -->
+        <form method="POST" enctype="multipart/form-data" autocomplete="off">
+            {% csrf_token %}
+
+            <div class="field">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="choose_a_username" required>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password1" placeholder="••••••••" required>
+            </div>
+
+            <div class="field">
+                <label>Confirm password</label>
+                <input type="password" name="password2" placeholder="••••••••" required>
+            </div>
+
+            <!-- ✅ NEW IMAGE FIELD -->
+            <div class="field">
+                <label>Profile Image</label>
+                <input type="file" name="image" accept="image/*">
+            </div>
+
+            <button type="submit" class="btn-submit">
+                ✦ Create account
+            </button>
+        </form>
+
+        <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">or</span>
+            <div class="divider-line"></div>
+        </div>
+
+        <div class="register-row">
+            Already have an account? <a href="{% url 'login' %}">Sign in →</a>
+        </div>
+
+    </div>
+
+    <div class="login-footer">FRASA · v2.2 · Secure</div>
+
+</div>
+
+</body>
+</html>

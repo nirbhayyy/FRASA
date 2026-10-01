@@ -1,0 +1,778 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FRASA — Fake Review Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+    <style>
+        /* ── MODE TOGGLE ── */
+        .mode-toggle-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 28px;
+            animation: fadeUp .5s .18s cubic-bezier(.22,1,.36,1) both;
+        }
+        .mode-toggle {
+            position: relative;
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 4px;
+            gap: 2px;
+        }
+        .mode-slider {
+            position: absolute;
+            top: 4px; bottom: 4px;
+            border-radius: 46px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            box-shadow: 0 4px 14px rgba(124,92,219,.35);
+            transition: left .35s cubic-bezier(.34,1.28,.64,1), width .35s cubic-bezier(.34,1.28,.64,1);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .mode-slider.sentiment {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            box-shadow: 0 4px 14px rgba(245,158,11,.35);
+        }
+        .mode-btn {
+            position: relative; z-index: 1;
+            padding: 9px 20px;
+            border: none; background: transparent;
+            border-radius: 46px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .85rem; font-weight: 500; letter-spacing: .03em;
+            color: var(--muted);
+            cursor: pointer;
+            transition: color .25s;
+            display: flex; align-items: center; gap: 6px;
+            white-space: nowrap;
+        }
+        .mode-btn.active { color: #fff; }
+        .mode-btn .mode-icon { font-size: 1rem; transition: transform .3s; }
+        .mode-btn.active .mode-icon { transform: scale(1.15); }
+
+        /* ── CARD MODE LABEL ── */
+        .card-mode-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .card-mode-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: .72rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+            padding: 4px 10px; border-radius: 99px;
+            transition: all .35s;
+            white-space: nowrap;
+        }
+        .card-mode-pill.detection { background: rgba(124,92,219,.12); color: var(--accent); border: 1px solid rgba(124,92,219,.2); }
+        .card-mode-pill.sentiment { background: rgba(251,191,36,.12); color: #f59e0b; border: 1px solid rgba(251,191,36,.25); }
+        .card-mode-desc { font-size: .8rem; color: var(--muted); }
+
+        /* ── SENTIMENT RESULT COLOURS ── */
+        .positive .result-main { color: var(--green); text-shadow: 0 0 24px rgba(74,222,128,.3); }
+        .negative .result-main { color: var(--red);   text-shadow: 0 0 24px rgba(248,113,113,.3); }
+        .neutral  .result-main { color: #fbbf24;       text-shadow: 0 0 24px rgba(251,191,36,.3); }
+        .mixed    .result-main { color: #60a5fa;       text-shadow: 0 0 24px rgba(96,165,250,.3); }
+
+        .btn-primary.sentiment-mode { background: linear-gradient(135deg,#f59e0b,#f97316)!important; box-shadow: 0 4px 20px rgba(245,158,11,.35)!important; }
+        .btn-primary.sentiment-mode:hover { box-shadow: 0 8px 28px rgba(245,158,11,.5)!important; }
+
+        /* ── BUTTON ROW — the key layout fix ── */
+        .btn-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;          /* wrap to next line instead of overflowing */
+            gap: 10px;                /* consistent spacing between all buttons */
+            margin-top: 16px;
+            margin-bottom: 0;
+        }
+
+        /* ── GRAPHS BUTTON ── */
+        .btn-graphs {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 10px 18px;
+            border-radius: 50px;
+            border: 1px solid rgba(91,141,238,.38);
+            background: rgba(91,141,238,.09);
+            color: #7aaaf5;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .84rem; font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .2s, border-color .2s, transform .18s, box-shadow .2s, color .2s;
+        }
+        .btn-graphs:hover:not(:disabled) {
+            background: rgba(91,141,238,.2);
+            border-color: rgba(91,141,238,.7);
+            color: #b3ccff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(91,141,238,.28);
+        }
+        .btn-graphs:active:not(:disabled) { transform: translateY(0); }
+        .btn-graphs:disabled { opacity: .3; cursor: not-allowed; }
+
+        /* ── HISTORY TOGGLE BUTTON ── */
+        .btn-history-toggle {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 10px 18px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.04);
+            color: var(--muted, rgba(232,230,240,.5));
+            font-family: 'DM Sans', sans-serif;
+            font-size: .84rem; font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .2s, border-color .2s, color .2s, transform .2s;
+        }
+        .btn-history-toggle:hover {
+            background: rgba(255,255,255,.08);
+            border-color: rgba(255,255,255,.2);
+            color: var(--text, #e8e6f0);
+            transform: translateY(-1px);
+        }
+        .btn-history-toggle.active {
+            background: rgba(124,92,219,.12);
+            border-color: rgba(124,92,219,.38);
+            color: #a78bfa;
+        }
+        .hist-arrow {
+            display: inline-block;
+            transition: transform .3s cubic-bezier(.34,1.28,.64,1);
+            font-style: normal; font-size: .7rem;
+        }
+        .btn-history-toggle.active .hist-arrow { transform: rotate(180deg); }
+
+        /* ── BULK BUTTON — matches sibling button style exactly ── */
+        .btn-bulk {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 10px 18px;
+            border-radius: 50px;
+            border: 1px solid rgba(74,222,128,.32);
+            background: rgba(74,222,128,.08);
+            color: #6ee7a0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .84rem; font-weight: 500;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .18s, box-shadow .2s, color .2s;
+        }
+        .btn-bulk:hover {
+            background: rgba(74,222,128,.18);
+            border-color: rgba(74,222,128,.65);
+            color: #bbf7d0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(74,222,128,.2);
+        }
+        .btn-bulk:active { transform: translateY(0); }
+
+        /* ── PROFILE CHIP ── */
+        .profile-chip {
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 4px 14px 4px 4px;
+            border-radius: 50px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.1);
+            transition: background .25s, border-color .25s, box-shadow .25s;
+            cursor: default; user-select: none;
+        }
+        .profile-chip:hover {
+            background: rgba(124,92,219,.12);
+            border-color: rgba(124,92,219,.4);
+            box-shadow: 0 0 0 3px rgba(124,92,219,.1);
+        }
+        .pc-av-wrap {
+            position: relative; width: 32px; height: 32px; flex-shrink: 0;
+        }
+        .pc-av-wrap::before {
+            content: '';
+            position: absolute; inset: -2px; border-radius: 50%;
+            background: conic-gradient(var(--accent,#7c5cdb), var(--accent2,#a78bfa), #22d3ee, var(--accent,#7c5cdb));
+            animation: pcSpin 3s linear infinite; z-index: 0;
+        }
+        @keyframes pcSpin { to { transform: rotate(360deg); } }
+        .pc-av {
+            position: relative; z-index: 1;
+            width: 32px; height: 32px;
+            border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--bg, #0f0f17); display: block;
+        }
+        .pc-status {
+            position: absolute; bottom: 0; right: 0;
+            width: 9px; height: 9px;
+            background: #10b981; border-radius: 50%;
+            border: 2px solid var(--bg, #0f0f17);
+            box-shadow: 0 0 6px #10b981; z-index: 2;
+        }
+        .pc-info { display: flex; flex-direction: column; gap: 1px; line-height: 1; }
+        .pc-name { font-family: 'DM Sans', sans-serif; font-size: .82rem; font-weight: 600; color: var(--text); letter-spacing: .01em; }
+        .pc-plan { font-family: 'DM Sans', sans-serif; font-size: .6rem; font-weight: 500; color: var(--accent2,#a78bfa); letter-spacing: .08em; text-transform: uppercase; }
+        .btn-logout-slim {
+            font-family: 'DM Sans', sans-serif; font-size: .78rem; font-weight: 500;
+            color: var(--muted); background: transparent;
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 6px 13px; cursor: pointer;
+            text-decoration: none;
+            transition: color .2s, background .2s, border-color .2s;
+            white-space: nowrap;
+        }
+        .btn-logout-slim:hover { color: #fb7185; background: rgba(244,63,94,.08); border-color: rgba(244,63,94,.3); }
+
+        /* ── HISTORY PANEL ── */
+        #historyPanel { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.07); }
+        #historyPanel.open { display: block; animation: slideDown .3s cubic-bezier(.22,1,.36,1) both; }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+        .history-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .history-panel-title { font-family: 'DM Sans', sans-serif; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 500; color: var(--muted, rgba(232,230,240,.4)); }
+        .history-clear { font-size: .72rem; color: var(--muted, rgba(232,230,240,.4)); background: none; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color .2s; }
+        .history-clear:hover { color: #f87171; }
+
+        /* ── VIZ PANEL ── */
+        #vizPanel { display: none; margin-top: 24px; }
+        #vizPanel.open { display: block; animation: fadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+        .vp-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .vp-title { font-family: 'DM Sans', sans-serif; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 500; color: rgba(232,230,240,.38); }
+        .vp-close {
+            background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
+            color: rgba(232,230,240,.4); font-size: .76rem; cursor: pointer;
+            padding: 4px 11px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+            transition: color .2s, background .2s, border-color .2s;
+        }
+        .vp-close:hover { color: #f87171; background: rgba(244,63,94,.08); border-color: rgba(244,63,94,.28); }
+
+        .vp-top { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; align-items: stretch; }
+
+        .vp-verdict-card {
+            flex: 1; min-width: 180px;
+            border-radius: 14px; padding: 18px 20px;
+            display: flex; align-items: center; gap: 14px;
+            border: 1px solid transparent;
+        }
+        .vp-verdict-card.genuine { background: rgba(74,222,128,.07); border-color: rgba(74,222,128,.2); }
+        .vp-verdict-card.fake    { background: rgba(248,113,113,.07); border-color: rgba(248,113,113,.2); }
+        .vp-verdict-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .genuine .vp-verdict-icon { background: rgba(74,222,128,.15); }
+        .fake    .vp-verdict-icon { background: rgba(248,113,113,.15); }
+        .vp-verdict-label { font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 500; margin-bottom: 3px; }
+        .genuine .vp-verdict-label { color: rgba(74,222,128,.6); }
+        .fake    .vp-verdict-label { color: rgba(248,113,113,.6); }
+        .vp-verdict-value { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; line-height: 1; }
+        .genuine .vp-verdict-value { color: #4ade80; }
+        .fake    .vp-verdict-value { color: #f87171; }
+
+        .vp-stats { display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; min-width: 140px; }
+        .vp-stat { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 11px; padding: 11px 14px; display: flex; align-items: center; gap: 11px; flex: 1; }
+        .vp-stat-icon { font-size: 1rem; flex-shrink: 0; }
+        .vp-stat-label { font-size: .6rem; letter-spacing: .09em; text-transform: uppercase; color: rgba(232,230,240,.36); font-weight: 500; margin-bottom: 2px; }
+        .vp-stat-value { font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 600; color: var(--text, #e8e6f0); }
+
+        .vp-conf { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
+        .vp-conf-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+        .vp-conf-label { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,230,240,.36); font-weight: 500; }
+        .vp-conf-right { display: flex; align-items: baseline; gap: 8px; }
+        .vp-conf-num { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 700; line-height: 1; }
+        .vp-conf-word { font-size: .74rem; color: rgba(232,230,240,.42); font-family: 'DM Sans', sans-serif; }
+        .vp-track { width: 100%; height: 8px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; margin-bottom: 7px; }
+        .vp-fill { height: 100%; border-radius: 99px; width: 0%; transition: width 1.15s cubic-bezier(.16,1,.3,1); }
+        .vp-ticks { display: flex; justify-content: space-between; }
+        .vp-tick { font-size: .6rem; color: rgba(232,230,240,.25); font-family: 'DM Sans', sans-serif; }
+
+        .vp-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media(max-width:560px) { .vp-charts { grid-template-columns: 1fr; } }
+        .vp-tile { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 16px 16px 12px; transition: border-color .2s; min-width: 0; }
+        .vp-tile:hover { border-color: rgba(255,255,255,.13); }
+        .vp-tile-label { font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,230,240,.33); font-weight: 500; margin-bottom: 2px; }
+        .vp-tile-name { font-family: 'DM Sans', sans-serif; font-size: .86rem; font-weight: 600; color: var(--text, #e8e6f0); margin-bottom: 12px; }
+        .vp-canvas-wrap { position: relative; width: 100%; height: 170px; }
+        .vp-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .vp-leg { display: inline-flex; align-items: center; gap: 5px; font-size: .69rem; font-weight: 500; color: rgba(232,230,240,.46); }
+        .vp-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+        #predictionCharts { display: none!important; }
+
+        /* ── RESPONSIVE ── */
+        @media(max-width: 580px) {
+            .mode-btn { padding: 9px 13px; font-size: .8rem; }
+            .btn-row { gap: 8px; }
+            .btn-graphs, .btn-history-toggle, .btn-bulk { padding: 9px 14px; font-size: .8rem; }
+        }
+        @media(max-width: 600px) {
+            .pc-info { display: none; }
+            .profile-chip { padding: 4px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="#" class="logo">
+                <div class="logo-icon">🔍</div>
+                <span class="logo-text">FRASA</span>
+            </a>
+            <nav class="site-nav">
+                <a href="{% url 'how_it_work' %}">How it works</a>
+                <a href="#">API</a>
+                <a href="#">Pricing</a>
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                {% if user.is_authenticated %}
+                <div class="profile-chip">
+                    <div class="pc-av-wrap">
+                        <img class="pc-av"
+                             src="{{ user.profile.image.url }}"
+                             alt="{{ user.username }}"
+                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ user.username }}&background=7c5cdb&color=fff&bold=true&size=64';" />
+                        <span class="pc-status"></span>
+                    </div>
+                    <div class="pc-info">
+                        <span class="pc-name">{{ user.username }}</span>
+                        <span class="pc-plan">Member</span>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="btn-logout-slim">Logout</a>
+                {% endif %}
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+
+        <div class="hero">
+            <p class="eyebrow" id="heroEyebrow">AI-Powered Detection</p>
+            <h1 class="hero-title">Spot the <span class="gradient-text" id="heroGradient">fake</span> review</h1>
+            <p class="hero-sub" id="heroSub">Paste any review below. Our model analyses language patterns, sentiment, and structure to flag suspicious content instantly.</p>
+        </div>
+
+        <div class="mode-toggle-wrap">
+            <div class="mode-toggle" id="modeToggle">
+                <div class="mode-slider" id="modeSlider"></div>
+                <button class="mode-btn active" id="btnDetection" onclick="switchMode('detection')">
+                    <span class="mode-icon">🕵️</span> Review Detection
+                </button>
+                <button class="mode-btn" id="btnSentiment" onclick="switchMode('sentiment')">
+                    <span class="mode-icon">🎭</span> Sentiment Analysis
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-mode-label">
+                <span class="card-mode-pill detection" id="cardModePill">🕵️ Detection Mode</span>
+                <span class="card-mode-desc" id="cardModeDesc">Checks authenticity of a review</span>
+            </div>
+
+            <label class="input-label" for="reviewText">Paste your review</label>
+            <textarea id="reviewText" placeholder='e.g. "Absolutely amazing product, changed my life!! 5 stars!!!"'></textarea>
+
+            <!-- ── BUTTON ROW ── -->
+            <div class="btn-row">
+                <button class="btn-primary" id="analyseBtn" onclick="handleAnalyse()">
+                    <span class="btn-icon">⚡</span>
+                    <span id="analyseBtnText">Analyse Review</span>
+                </button>
+
+                <button class="btn-graphs" id="graphsBtn" onclick="toggleGraphs()" disabled>
+                    📊 Generate Graphs
+                </button>
+
+                <button class="btn-history-toggle" id="historyToggleBtn" onclick="toggleHistory()">
+                    🕒 History <i class="hist-arrow">▾</i>
+                </button>
+
+                <a href="{% url 'bulk_check' %}" class="btn-bulk">
+                    📂 Bulk Reviews
+                </a>
+            </div>
+
+            <div id="result" class="result-area"></div>
+
+            <!-- ── VIZ PANEL ── -->
+            <div id="vizPanel">
+                <div class="vp-header">
+                    <span class="vp-title">📈 Visual Results</span>
+                    <button class="vp-close" onclick="closeViz()">✕ Close</button>
+                </div>
+
+                <div class="vp-top" id="vpTop"></div>
+
+                <div class="vp-conf">
+                    <div class="vp-conf-row">
+                        <span class="vp-conf-label">Confidence Score</span>
+                        <div class="vp-conf-right">
+                            <span class="vp-conf-num" id="vpConfNum">—</span>
+                            <span class="vp-conf-word" id="vpConfWord"></span>
+                        </div>
+                    </div>
+                    <div class="vp-track"><div class="vp-fill" id="vpFill"></div></div>
+                    <div class="vp-ticks">
+                        <span class="vp-tick">0%</span>
+                        <span class="vp-tick">25%</span>
+                        <span class="vp-tick">50%</span>
+                        <span class="vp-tick">75%</span>
+                        <span class="vp-tick">100%</span>
+                    </div>
+                </div>
+
+                <div class="vp-charts">
+                    <div class="vp-tile">
+                        <div class="vp-tile-label">Authenticity</div>
+                        <div class="vp-tile-name">Genuine vs Fake</div>
+                        <div class="vp-canvas-wrap"><canvas id="vizAuthChart"></canvas></div>
+                        <div class="vp-legend">
+                            <span class="vp-leg"><span class="vp-dot" style="background:#4ade80"></span>Genuine</span>
+                            <span class="vp-leg"><span class="vp-dot" style="background:#f87171"></span>Fake</span>
+                        </div>
+                    </div>
+                    <div class="vp-tile">
+                        <div class="vp-tile-label">Sentiment</div>
+                        <div class="vp-tile-name">Tone Analysis</div>
+                        <div class="vp-canvas-wrap"><canvas id="vizSentiChart"></canvas></div>
+                        <div class="vp-legend">
+                            <span class="vp-leg"><span class="vp-dot" style="background:#a78bfa"></span>Positive</span>
+                            <span class="vp-leg"><span class="vp-dot" style="background:#fbbf24"></span>Negative</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── HISTORY PANEL ── -->
+            <div id="historyPanel">
+                <div class="history-panel-header">
+                    <span class="history-panel-title">Recent Analyses</span>
+                    <button class="history-clear" onclick="clearHistory()">Clear</button>
+                </div>
+                <ul id="history" class="history-list"></ul>
+            </div>
+
+            <!-- Hidden chart canvases for existing script.js -->
+            <div id="predictionCharts" style="display:none!important">
+                <canvas id="confidenceChartSingle"></canvas>
+                <canvas id="predictionChartSingle"></canvas>
+                <canvas id="sentimentChartSingle"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-strip">
+            <div class="stat"><div class="stat-num">98.4%</div><div class="stat-label">Accuracy</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><div class="stat-num">2.1M+</div><div class="stat-label">Reviews checked</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><div class="stat-num">&lt;1s</div><div class="stat-label">Response time</div></div>
+        </div>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-left">
+                <span class="footer-brand">FRASA</span>
+                <span class="footer-copy">© 2026 · All rights reserved</span>
+            </div>
+            <div class="footer-links">
+                <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a><a href="#">Docs</a>
+            </div>
+            <div class="footer-badge">v2.4 · Live</div>
+        </div>
+    </footer>
+
+    <script>
+    function getCSRFToken(){
+        return document.cookie.split('; ').find(r=>r.startsWith('csrftoken='))?.split('=')[1];
+    }
+    </script>
+
+    <script src="{% static 'js/script.js' %}"></script>
+
+    <script>
+    const vizState = { prediction:null, confidence:null, sentiment:null };
+    let vizCharts  = { auth:null, senti:null };
+    let historyOpen = false;
+    let vizOpen     = false;
+
+    const VIZ_TIP = {
+        backgroundColor:'rgba(9,9,18,.95)', borderColor:'rgba(255,255,255,.1)', borderWidth:1,
+        titleColor:'#e8e6f0', bodyColor:'rgba(232,230,240,.55)', padding:12, cornerRadius:10,
+        titleFont:{family:"'DM Sans',sans-serif", size:12, weight:'500'},
+        bodyFont: {family:"'DM Sans',sans-serif", size:11},
+    };
+
+    /* Intercept fetch to capture prediction/sentiment results */
+    const _origFetch = window.fetch.bind(window);
+    window.fetch = async (url, opts) => {
+        const res   = await _origFetch(url, opts);
+        const clone = res.clone();
+        if (typeof url === 'string') {
+            if (url.includes('/pred_rev/')) {
+                clone.json().then(d => {
+                    vizState.prediction = d.prediction ?? null;
+                    vizState.confidence = d.confidence ?? d.confidance ?? 0;
+                    document.getElementById('graphsBtn').disabled = !vizState.prediction;
+                    if (vizOpen) buildCharts();
+                }).catch(()=>{});
+            }
+            if (url.includes('/pred_senti/')) {
+                clone.json().then(d => {
+                    vizState.sentiment = d.sentiments ?? null;
+                    if (vizOpen) buildCharts();
+                }).catch(()=>{});
+            }
+        }
+        return res;
+    };
+
+    function toggleGraphs() {
+        vizOpen = !vizOpen;
+        const panel = document.getElementById('vizPanel');
+        const btn   = document.getElementById('graphsBtn');
+        if (vizOpen) {
+            panel.classList.add('open');
+            buildCharts();
+            setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 50);
+            btn.innerHTML = '✕ Close Graphs';
+        } else {
+            closeViz();
+        }
+    }
+
+    function closeViz() {
+        vizOpen = false;
+        document.getElementById('vizPanel').classList.remove('open');
+        document.getElementById('graphsBtn').innerHTML = '📊 Generate Graphs';
+    }
+
+    function buildCharts() {
+        const pred      = vizState.prediction ?? 'GENUINE';
+        const conf      = vizState.confidence ?? 0.75;
+        const senti     = vizState.sentiment;
+        const isGenuine = pred === 'GENUINE';
+        const confPct   = Math.round(conf * 1000) / 10;
+        const isPos     = senti === 'positive';
+        const hasSenti  = senti !== null;
+
+        const confColor = confPct >= 80 ? '#4ade80' : confPct >= 50 ? '#fbbf24' : '#f87171';
+        const confWord  = confPct >= 80 ? 'Strong prediction'
+                        : confPct >= 50 ? 'Moderate prediction'
+                        : 'Low confidence';
+
+        const sentiHtml = hasSenti
+            ? `<div class="vp-stat"><span class="vp-stat-icon">${isPos?'😊':'😞'}</span><div><div class="vp-stat-label">Sentiment</div><div class="vp-stat-value" style="color:${isPos?'#a78bfa':'#fbbf24'}">${isPos?'Positive':'Negative'}</div></div></div>`
+            : `<div class="vp-stat"><span class="vp-stat-icon">🎭</span><div><div class="vp-stat-label">Sentiment</div><div class="vp-stat-value" style="color:rgba(232,230,240,.3)">Not run yet</div></div></div>`;
+
+        document.getElementById('vpTop').innerHTML = `
+            <div class="vp-verdict-card ${isGenuine?'genuine':'fake'}">
+                <div class="vp-verdict-icon">${isGenuine?'✅':'⚠️'}</div>
+                <div>
+                    <div class="vp-verdict-label">Verdict</div>
+                    <div class="vp-verdict-value">${isGenuine?'Genuine Review':'Fake Review'}</div>
+                </div>
+            </div>
+            <div class="vp-stats">
+                <div class="vp-stat">
+                    <span class="vp-stat-icon">🎯</span>
+                    <div><div class="vp-stat-label">Confidence</div><div class="vp-stat-value" style="color:${confColor}">${confPct}%</div></div>
+                </div>
+                ${sentiHtml}
+            </div>`;
+
+        document.getElementById('vpConfNum').textContent  = confPct + '%';
+        document.getElementById('vpConfNum').style.color  = confColor;
+        document.getElementById('vpConfWord').textContent = confWord;
+        document.getElementById('vpFill').style.background = confColor;
+        document.getElementById('vpFill').style.width = '0%';
+        requestAnimationFrame(() => setTimeout(() => {
+            document.getElementById('vpFill').style.width = confPct + '%';
+        }, 60));
+
+        Object.values(vizCharts).forEach(c => c && c.destroy());
+
+        const centrePlugin = (id, big, small, col) => ({
+            id,
+            afterDraw(chart) {
+                const {ctx, chartArea:{left,top,right,bottom}} = chart;
+                const cx = (left+right)/2, cy = (top+bottom)/2;
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.font = "700 21px 'Playfair Display', serif";
+                ctx.fillStyle = col;
+                ctx.fillText(big, cx, cy-9);
+                ctx.font = "500 9px 'DM Sans', sans-serif";
+                ctx.fillStyle = 'rgba(232,230,240,.38)';
+                ctx.fillText(small, cx, cy+10);
+                ctx.restore();
+            }
+        });
+
+        vizCharts.auth = new Chart(document.getElementById('vizAuthChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Genuine','Fake'],
+                datasets: [{
+                    data: isGenuine ? [100,0] : [0,100],
+                    backgroundColor: ['rgba(74,222,128,.72)','rgba(248,113,113,.72)'],
+                    borderColor:     ['rgba(74,222,128,1)',  'rgba(248,113,113,1)'],
+                    borderWidth: 2, hoverOffset: 6,
+                }]
+            },
+            options: {
+                cutout: '74%', responsive: true, maintainAspectRatio: false,
+                animation: {animateRotate:true, duration:950, easing:'easeOutQuart'},
+                plugins: {legend:{display:false}, tooltip:{...VIZ_TIP}}
+            },
+            plugins: [centrePlugin('ac', isGenuine?'✓':'✗', isGenuine?'GENUINE':'FAKE', isGenuine?'#4ade80':'#f87171')]
+        });
+
+        const sd   = hasSenti ? (isPos?[82,18]:[18,82]) : [50,50];
+        const sc   = hasSenti ? (isPos?'😊':'😞') : '?';
+        const ss   = hasSenti ? (isPos?'POSITIVE':'NEGATIVE') : 'PENDING';
+        const sCol = hasSenti ? (isPos?'#a78bfa':'#fbbf24') : 'rgba(232,230,240,.3)';
+
+        vizCharts.senti = new Chart(document.getElementById('vizSentiChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Negative'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['rgba(167,139,250,.72)','rgba(251,191,36,.72)'],
+                    borderColor:     ['rgba(167,139,250,1)',  'rgba(251,191,36,1)'],
+                    borderWidth: 2, hoverOffset: 6,
+                }]
+            },
+            options: {
+                cutout: '74%', responsive: true, maintainAspectRatio: false,
+                animation: {animateRotate:true, duration:950, easing:'easeOutQuart'},
+                plugins: {legend:{display:false}, tooltip:{...VIZ_TIP}}
+            },
+            plugins: [centrePlugin('sc', sc, ss, sCol)]
+        });
+    }
+
+    function toggleHistory() {
+        historyOpen = !historyOpen;
+        const panel = document.getElementById('historyPanel');
+        const btn   = document.getElementById('historyToggleBtn');
+        if (historyOpen) {
+            panel.classList.add('open');
+            btn.classList.add('active');
+            loadReviewsForMode();
+        } else {
+            panel.classList.remove('open');
+            btn.classList.remove('active');
+        }
+    }
+
+    function clearHistory() {
+        document.getElementById('history').innerHTML = '<li class="history-empty">History cleared.</li>';
+    }
+
+    let currentMode = 'detection';
+
+    window.addEventListener('load', () => {
+        const btn    = document.getElementById('btnDetection');
+        const slider = document.getElementById('modeSlider');
+        const wrap   = document.getElementById('modeToggle');
+        if (!btn || !slider || !wrap) return;
+        const b = btn.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+        slider.style.left  = (b.left - w.left - 4) + 'px';
+        slider.style.width = b.width + 'px';
+    });
+
+    function switchMode(mode) {
+        if (currentMode === mode) return;
+        currentMode = mode;
+        if (historyOpen) toggleHistory();
+        const btnDet = document.getElementById('btnDetection');
+        const btnSen = document.getElementById('btnSentiment');
+        const slider = document.getElementById('modeSlider');
+        const wrap   = document.getElementById('modeToggle');
+        const pill   = document.getElementById('cardModePill');
+        const desc   = document.getElementById('cardModeDesc');
+        const btn    = document.getElementById('analyseBtn');
+        const btnTxt = document.getElementById('analyseBtnText');
+        const ta     = document.getElementById('reviewText');
+        const res    = document.getElementById('result');
+        res.className = 'result-area'; res.innerHTML = '';
+        document.getElementById('history').innerHTML = '';
+        const activeBtn = mode === 'detection' ? btnDet : btnSen;
+        const b = activeBtn.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+        slider.style.left  = (b.left - w.left - 4) + 'px';
+        slider.style.width = b.width + 'px';
+        if (mode === 'detection') {
+            btnDet.classList.add('active'); btnSen.classList.remove('active');
+            slider.classList.remove('sentiment');
+            pill.className = 'card-mode-pill detection'; pill.textContent = '🕵️ Detection Mode';
+            desc.textContent = 'Checks authenticity of a review';
+            btn.classList.remove('sentiment-mode'); btnTxt.textContent = 'Analyse Review';
+            document.getElementById('heroEyebrow').textContent = 'AI-Powered Detection';
+            document.getElementById('heroGradient').textContent = 'fake';
+            document.getElementById('heroSub').textContent = 'Paste any review below. Our model analyses language patterns, sentiment, and structure to flag suspicious content instantly.';
+            ta.placeholder = 'e.g. "Absolutely amazing product, changed my life!! 5 stars!!!"';
+        } else {
+            btnSen.classList.add('active'); btnDet.classList.remove('active');
+            slider.classList.add('sentiment');
+            pill.className = 'card-mode-pill sentiment'; pill.textContent = '🎭 Sentiment Mode';
+            desc.textContent = 'Detects tone & emotion in the text';
+            btn.classList.add('sentiment-mode'); btnTxt.textContent = 'Analyse Sentiment';
+            document.getElementById('heroEyebrow').textContent = 'AI-Powered Sentiment';
+            document.getElementById('heroGradient').textContent = 'feel';
+            document.getElementById('heroSub').textContent = 'Paste any review below. Our model reads between the lines — detecting tone, emotion, and overall sentiment with precision.';
+            ta.placeholder = 'e.g. "The service was okay but I expected a bit more for the price…"';
+        }
+    }
+
+    function handleAnalyse() {
+        if (currentMode === 'detection') predictReview();
+        else analyseSentiment();
+    }
+
+    async function loadReviewsForMode() {
+        const list     = document.getElementById('history');
+        const endpoint = currentMode === 'detection' ? '/get_rev/' : '/get_sentiment/';
+        list.innerHTML = `<li class="history-loading"><span class="spinner" style="width:13px;height:13px;display:inline-block;vertical-align:middle;margin-right:6px"></span>Loading…</li>`;
+        try {
+            const res  = await _origFetch(endpoint, {headers:{'X-CSRFToken':getCSRFToken()}});
+            if (!res.ok) throw new Error();
+            const data    = await res.json();
+            const reviews = Array.isArray(data) ? data : (data.reviews ?? []);
+            if (!reviews.length) { list.innerHTML = `<li class="history-empty">No history yet.</li>`; return; }
+            list.innerHTML = reviews.map((item, i) => {
+                if (currentMode === 'detection') {
+                    const isG  = item.prediction === 'GENUINE';
+                    const rc   = item.confidence ?? item.confidance;
+                    const conf = rc != null ? (rc*100).toFixed(1)+'%' : '';
+                    const prev = (item.text ?? '').slice(0, 120);
+                    return `<li style="animation-delay:${i*.05}s"><span class="history-badge ${isG?'genuine':'fake'}">${isG?'✅':'⚠️'} ${item.prediction}</span>${conf?`<span class="history-conf">${conf} confidence</span>`:''}<p class="history-text">${prev}</p></li>`;
+                } else {
+                    const sent  = (item.sentiment ?? 'NEUTRAL').toUpperCase();
+                    const icons = {POSITIVE:'😊', NEGATIVE:'😞', NEUTRAL:'😐', MIXED:'🤔'};
+                    const rc    = item.confidence ?? item.confidance;
+                    const conf  = rc != null ? (rc*100).toFixed(1)+'%' : '';
+                    const prev  = (item.text ?? '').slice(0, 120);
+                    return `<li style="animation-delay:${i*.05}s"><span class="history-badge ${sent.toLowerCase()}">${icons[sent]??'😐'} ${sent}</span>${conf?`<span class="history-conf">${conf} confidence</span>`:''}<p class="history-text">${prev}</p></li>`;
+                }
+            }).join('');
+        } catch(err) {
+            list.innerHTML = `<li class="history-empty" style="color:var(--red)">❌ Failed to load.</li>`;
+        }
+    }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - FRASA</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/know.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header>
+    <div class="logo">FRASA</div>
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'history' %}">History</a>
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'register' %}">Register</a>
+    </nav>
+</header>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+    <h1>How FRASA Works</h1>
+    <p>From raw review text to intelligent analysis — here's the full picture.</p>
+</section>
+
+<!-- STEPS -->
+<section class="section">
+    <h2>The Process</h2>
+    <div class="steps">
+
+        <div class="step">
+            <div class="step-number">01</div>
+            <div class="step-content">
+                <h3>📝 Submit a Review</h3>
+                <p>Paste any product review into the input box. FRASA accepts text of any length and language style.</p>
+            </div>
+        </div>
+
+        <div class="step-connector"></div>
+
+        <div class="step">
+            <div class="step-number">02</div>
+            <div class="step-content">
+                <h3>🤖 ML Model Analyzes</h3>
+                <p>Our trained machine learning model scans the review for patterns — over-excitement, repetition, vague language — that signal fake content.</p>
+            </div>
+        </div>
+
+        <div class="step-connector"></div>
+
+        <div class="step">
+            <div class="step-number">03</div>
+            <div class="step-content">
+                <h3>🎭 Sentiment is Detected</h3>
+                <p>A separate NLP pipeline classifies the emotional tone as Positive, Negative, or Neutral with a confidence score.</p>
+            </div>
+        </div>
+
+        <div class="step-connector"></div>
+
+        <div class="step">
+            <div class="step-number">04</div>
+            <div class="step-content">
+                <h3>📊 Results are Shown</h3>
+                <p>You instantly see whether the review is Fake or Genuine, along with the sentiment breakdown and confidence bars.</p>
+            </div>
+        </div>
+
+        <div class="step-connector"></div>
+
+        <div class="step">
+            <div class="step-number">05</div>
+            <div class="step-content">
+                <h3>🗂️ Saved to History</h3>
+                <p>Every analysis is saved to your account so you can review, compare, and track past predictions anytime.</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="section tech-section">
+    <h2>Tech Behind FRASA</h2>
+    <div class="features">
+        <div class="feature">
+            <h3>🐍 Python & Django</h3>
+            <p>Backend logic and routing powered by Django, keeping everything fast and secure.</p>
+        </div>
+        <div class="feature">
+            <h3>🧠 Scikit-learn</h3>
+            <p>Machine learning models trained on labeled review datasets to detect fake patterns.</p>
+        </div>
+        <div class="feature">
+            <h3>💬 NLP Pipeline</h3>
+            <p>Natural language processing to break down text and extract sentiment signals.</p>
+        </div>
+        <div class="feature">
+            <h3>🗄️ SQLite / PostgreSQL</h3>
+            <p>All review history and user data stored reliably in a relational database.</p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="section cta-section">
+    <h2>Ready to Try It?</h2>
+    <p>Paste a review and see FRASA in action in seconds.</p>
+    <a href="{% url 'check_review' %}" class="btn btn-primary">🚀 Try Now</a>
+    <a href="{% url 'register' %}" class="btn btn-secondary">Create Account</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <p>© 2026 FRASA</p>
+</footer>
+
+</body>
+</html>

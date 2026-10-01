@@ -1,0 +1,56 @@
+/* ===== KEYFRAMES ===== */
+@keyframes slidein-top {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadein-left {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadein-right {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadein-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== ANIMATION CLASSES ===== */
+.anim-slidein-top {
+    animation: slidein-top 0.6s ease both;
+}
+
+.anim-fadein-left {
+    animation: fadein-left 0.7s ease 0.2s both;
+}
+
+.anim-fadein-right {
+    animation: fadein-right 0.7s ease 0.4s both;
+}
+
+.anim-fadein-up {
+    animation: fadein-up 0.6s ease both;
+}
+
+/* ===== STAGGER DELAYS for feature cards ===== */
+.anim-delay-1 {
+    animation-delay: 0.3s;
+}
+
+.anim-delay-2 {
+    animation-delay: 0.5s;
+}
+
+/* ===== HOVER — feature cards only ===== */
+.feature {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+}

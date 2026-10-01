@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk Review Check</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:            #09090f;
+            --bg-grad-1:     rgba(102,70,200,0.2);
+            --bg-grad-2:     rgba(20,140,200,0.13);
+            --surface:       rgba(255,255,255,0.04);
+            --surface-hov:   rgba(255,255,255,0.07);
+            --border:        rgba(255,255,255,0.09);
+            --border-hov:    rgba(255,255,255,0.15);
+            --text:          #e8e6f0;
+            --muted:         rgba(232,230,240,0.4);
+            --accent:        #7c5cdb;
+            --accent2:       #5b8dee;
+            --green:         #4ade80;
+            --red:           #f87171;
+            --accent-blue:   #5b8dee;
+            --accent-pink:   #c084fc;
+            --accent-green:  #4ade80;
+            --accent-orange: #fb923c;
+            --accent-purple: #7c5cdb;
+            --glass:         rgba(255,255,255,0.04);
+            --radius:        12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+        body {
+            background: #09090f;
+            color: #e8e6f0;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(ellipse 70% 50% at 15% 5%,  var(--bg-grad-1) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 85% 95%, var(--bg-grad-2) 0%, transparent 55%);
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(124,92,219,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124,92,219,.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            animation: gridDrift 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes gridDrift { from { background-position: 0 0 } to { background-position: 48px 48px } }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px; left: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(124,92,219,.15), transparent 70%);
+            animation: blobFloat 8s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes blobFloat { from { transform: translate(0,0) } to { transform: translate(80px,60px) } }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            gap: 16px;
+        }
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .btn-detect {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .73rem;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: opacity .2s, transform .2s, box-shadow .2s;
+            box-shadow: 0 4px 20px rgba(124,92,219,.38);
+        }
+        .btn-detect:hover {
+            opacity: .88;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(124,92,219,.5);
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .73rem;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.09);
+            border-color: var(--border-hov);
+            transform: translateY(-1px);
+        }
+        .profile-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 5px 14px 5px 5px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+        .profile-chip:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--border-hov);
+            transform: translateY(-1px);
+        }
+        .profile-initials {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: .72rem; font-weight: 700; color: #fff;
+            flex-shrink: 0; letter-spacing: .02em;
+            position: relative; overflow: hidden;
+        }
+        .profile-initials::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.18), transparent);
+            pointer-events: none;
+        }
+        .profile-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%; object-fit: cover;
+            border: 1.5px solid rgba(124,92,219,.45);
+            display: block; flex-shrink: 0;
+        }
+        .profile-name {
+            font-size: .82rem; font-weight: 500;
+            color: var(--text); white-space: nowrap;
+        }
+
+        /* ── INPUT AREA ── */
+        .input-section {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 32px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            margin-bottom: 28px;
+            box-shadow: 0 2px 0 rgba(255,255,255,0.05) inset, 0 40px 80px rgba(0,0,0,0.18);
+            transition: border-color .25s;
+            position: relative;
+            overflow: hidden;
+        }
+        .input-section::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(124,92,219,.1), transparent 70%);
+            pointer-events: none;
+        }
+        .input-section:hover { border-color: var(--border-hov); }
+
+        .section-label {
+            font-size: .72rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        /* Tabs: Paste / Upload */
+        .tab-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 7px 20px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(124,92,219,.35);
+        }
+        .tab-btn:not(.active):hover {
+            border-color: var(--border-hov);
+            color: var(--text);
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        /* Textarea */
+        .bulk-textarea {
+            width: 100%;
+            min-height: 180px;
+            background: rgba(255,255,255,0.035);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .88rem;
+            font-weight: 300;
+            padding: 16px;
+            resize: vertical;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            line-height: 1.6;
+        }
+        .bulk-textarea::placeholder { color: var(--muted); }
+        .bulk-textarea:focus {
+            border-color: rgba(124,92,219,.55);
+            box-shadow: 0 0 0 3px rgba(124,92,219,.12);
+        }
+
+        /* File drop zone */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: rgba(124,92,219,.6);
+            background: rgba(124,92,219,.05);
+        }
+        .drop-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .drop-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+        .drop-label { font-size: .88rem; color: var(--muted); }
+        .drop-label span { color: var(--accent2); }
+        .file-hint { font-size: .72rem; color: var(--muted); margin-top: 6px; }
+
+        /* Options row */
+        .options-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .check-sentiment-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-track {
+            width: 38px; height: 20px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            position: relative;
+            transition: background .2s;
+        }
+        .toggle-track.on {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-color: transparent;
+        }
+        .toggle-thumb {
+            width: 14px; height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px; left: 2px;
+            transition: transform .2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,.3);
+        }
+        .toggle-track.on .toggle-thumb { transform: translateX(18px); }
+        .toggle-label { font-size: .82rem; color: var(--muted); }
+        .toggle-label.on { color: var(--text); }
+
+        .review-count-badge {
+            margin-left: auto;
+            font-size: .78rem;
+            color: var(--muted);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 4px 12px;
+        }
+        .review-count-badge span { color: var(--accent2); font-weight: 600; }
+
+        /* Run button */
+        .run-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .82rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 12px 32px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            transition: opacity .2s, transform .2s, box-shadow .2s;
+            box-shadow: 0 4px 24px rgba(124,92,219,.4);
+            margin-top: 20px;
+        }
+        .run-btn:hover:not(:disabled) {
+            opacity: .88;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(124,92,219,.55);
+        }
+        .run-btn:disabled { opacity: .45; cursor: not-allowed; }
+        .run-btn .spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            display: none;
+        }
+        .run-btn.loading .spinner { display: block; }
+        .run-btn.loading .btn-icon { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── SUMMARY CARDS (same style as dashboard cards) ── */
+        .summary-section {
+            display: none;
+            margin-bottom: 28px;
+        }
+        .summary-section.visible { display: block; }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            padding: 20px;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            transition: transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease, border-color .25s ease;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 20px 50px rgba(0,0,0,0.25);
+        }
+        .card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.05), transparent);
+            pointer-events: none;
+        }
+        .card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,.45);
+            border-color: var(--border-hov);
+        }
+        .card-icon { font-size: 1.5rem; margin-bottom: 8px; display: block; }
+        .card-label {
+            font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+            color: var(--muted); font-weight: 500; margin-bottom: 8px;
+        }
+        .card-value {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+            font-weight: 700; line-height: 1;
+        }
+        .card-bar { margin-top: 12px; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+        .card-bar-fill { height: 100%; border-radius: 99px; width: 0; transition: width 1.2s cubic-bezier(.22,1,.36,1); }
+
+        .card:nth-child(1) { --c: var(--accent-blue);   }
+        .card:nth-child(2) { --c: var(--accent-pink);   }
+        .card:nth-child(3) { --c: var(--accent-green);  }
+        .card:nth-child(4) { --c: var(--accent-orange); }
+        .card:nth-child(5) { --c: var(--accent-purple); }
+        .card .card-value    { color: var(--c); }
+        .card .card-bar-fill { background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 60%, white)); }
+        .card-glow {
+            position: absolute; top: -40px; right: -40px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, var(--c), transparent 70%);
+            opacity: .1; pointer-events: none; transition: opacity .3s;
+        }
+        .card:hover .card-glow { opacity: .22; }
+
+        /* ── CHARTS GRID (same as dashboard) ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+        .chart-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 28px 20px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 0 rgba(255,255,255,0.05) inset, 0 40px 80px rgba(0,0,0,0.18);
+            transition: border-color .25s ease;
+        }
+        .chart-card:hover { border-color: var(--border-hov); }
+        .chart-card::after {
+            content: '';
+            position: absolute; bottom: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(124,92,219,.1), transparent 70%);
+            pointer-events: none;
+        }
+        .chart-title {
+            font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+            color: var(--muted); font-weight: 500; margin-bottom: 4px;
+        }
+        .chart-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 20px;
+        }
+
+        /* ── RESULTS TABLE ── */
+        .results-section {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 28px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.05) inset, 0 40px 80px rgba(0,0,0,0.18);
+            display: none;
+        }
+        .results-section.visible { display: block; }
+
+        /* Filter pills */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .pill {
+            padding: 6px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .pill.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(124,92,219,.3);
+        }
+        .pill:not(.active):hover { border-color: var(--border-hov); color: var(--text); }
+
+        /* Export button */
+        .export-btn {
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .75rem;
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .export-btn:hover { background: rgba(255,255,255,0.09); border-color: var(--border-hov); }
+
+        /* Table */
+        .table-wrap { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .84rem;
+        }
+        thead th {
+            text-align: left;
+            font-size: .68rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 500;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr {
+            transition: background .15s;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        tbody tr:hover { background: rgba(255,255,255,0.03); }
+        tbody td { padding: 13px 14px; vertical-align: middle; color: var(--text); }
+
+        /* Review text cell */
+        .review-text-cell {
+            max-width: 380px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: rgba(232,230,240,0.75);
+            font-size: .82rem;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: .72rem; font-weight: 600;
+        }
+        .badge-fake    { background: rgba(192,132,252,.15); color: #c084fc; border: 1px solid rgba(192,132,252,.25); }
+        .badge-genuine { background: rgba(74,222,128,.12);  color: #4ade80; border: 1px solid rgba(74,222,128,.22); }
+        .badge-positive { background: rgba(91,141,238,.12); color: #5b8dee; border: 1px solid rgba(91,141,238,.22); }
+        .badge-negative { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.22); }
+        .badge-pending  { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--border); }
+
+        /* Confidence bar */
+        .conf-bar { height: 4px; background: var(--border); border-radius: 99px; width: 80px; overflow: hidden; }
+        .conf-bar-fill { height: 100%; border-radius: 99px; width: 0; transition: width .9s cubic-bezier(.22,1,.36,1); }
+        .conf-high   .conf-bar-fill { background: linear-gradient(90deg, #4ade80, #5b8dee); }
+        .conf-medium .conf-bar-fill { background: linear-gradient(90deg, #fb923c, #f87171); }
+        .conf-low    .conf-bar-fill { background: linear-gradient(90deg, #f87171, #c084fc); }
+        .conf-num { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+        /* Row # */
+        .row-num { color: var(--muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+
+        /* ── PROGRESS BAR (while processing) ── */
+        .progress-section {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .progress-section.visible { display: block; }
+        .progress-label {
+            font-size: .8rem; color: var(--muted);
+            margin-bottom: 8px;
+            display: flex; justify-content: space-between;
+        }
+        .progress-track {
+            height: 6px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            width: 0%;
+            transition: width .3s ease;
+        }
+
+        /* ── ANIMATIONS ── */
+        .fade-up {
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp .55s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .card { animation: fadeUp .5s cubic-bezier(0.22,1,0.36,1) forwards; opacity:0; }
+        .card:nth-child(1){ animation-delay:.05s }
+        .card:nth-child(2){ animation-delay:.12s }
+        .card:nth-child(3){ animation-delay:.19s }
+        .card:nth-child(4){ animation-delay:.26s }
+        .card:nth-child(5){ animation-delay:.33s }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(124,92,219,.3); border-radius: 3px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .cards { gap: 12px; }
+            .card { min-width: calc(50% - 8px); }
+        }
+        @media (max-width: 540px) {
+            .container { padding: 20px; }
+            .header h1 { font-size: 1.3rem; }
+            .profile-name { display: none; }
+            .header-right { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ── HEADER ── -->
+    <div class="header fade-up">
+        <h1>🔍 Bulk Review Check</h1>
+        <div class="header-right">
+            <a href="{% url 'check_review' %}" class="btn-secondary">➕ Single Check</a>
+            <a href="{% url 'dashboard' %}"    class="btn-detect">📊 Dashboard</a>
+            <div class="profile-chip">
+                {% if request.user.profile.image %}
+                    <img class="profile-avatar"
+                         src="{{ request.user.profile.image.url }}"
+                         alt="{{ request.user.username }}">
+                {% else %}
+                    <div class="profile-initials">
+                        {{ request.user.username|slice:":2"|upper }}
+                    </div>
+                {% endif %}
+                <span class="profile-name">{{ request.user.username }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── INPUT SECTION ── -->
+    <div class="input-section fade-up" style="animation-delay:.08s">
+        <div class="section-label">Input</div>
+        <div class="section-title">Paste or Upload Multiple Reviews</div>
+
+        <!-- Tabs -->
+        <div class="tab-row">
+            <button class="tab-btn active" data-tab="paste">✏️ Paste Text</button>
+            <button class="tab-btn"        data-tab="upload">📁 Upload File</button>
+        </div>
+
+        <!-- Paste Tab -->
+        <div class="tab-pane active" id="tab-paste">
+            <textarea
+                class="bulk-textarea"
+                id="bulkTextarea"
+                placeholder="Enter one review per line. For example:&#10;This product is absolutely amazing, best purchase ever!&#10;Terrible quality, broke after one day, total waste of money.&#10;Great value for the price, works as described."
+            ></textarea>
+        </div>
+
+        <!-- Upload Tab -->
+        <div class="tab-pane" id="tab-upload">
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept=".txt,.csv">
+                <span class="drop-icon">📂</span>
+                <div class="drop-label">Drop a file here or <span>click to browse</span></div>
+                <div class="file-hint">.txt (one review per line) &nbsp;·&nbsp; .csv (first column used)</div>
+            </div>
+            <div id="fileStatus" style="font-size:.8rem;color:var(--muted);margin-top:10px;"></div>
+        </div>
+
+        <!-- Options row -->
+        <div class="options-row">
+            <!-- Sentiment toggle -->
+            <label class="check-sentiment-toggle" id="sentimentToggle">
+                <div class="toggle-track" id="toggleTrack">
+                    <div class="toggle-thumb"></div>
+                </div>
+                <span class="toggle-label" id="toggleLabel">Also analyse sentiment</span>
+            </label>
+
+            <div class="review-count-badge">
+                <span id="reviewCountNum">0</span> reviews detected
+            </div>
+        </div>
+
+        <!-- Progress bar (shown while running) -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-label">
+                <span id="progressText">Processing...</span>
+                <span id="progressPct">0%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <button class="run-btn" id="runBtn" onclick="runBulkCheck()">
+            <span class="spinner"></span>
+            <span class="btn-icon">⚡</span>
+            Analyse All Reviews
+        </button>
+    </div>
+
+    <!-- ── SUMMARY CARDS ── -->
+    <div class="summary-section" id="summarySection">
+        <div class="cards" id="summaryCards">
+            <div class="card">
+                <div class="card-glow"></div>
+                <span class="card-icon">🗂️</span>
+                <div class="card-label">Total</div>
+                <div class="card-value" id="sTotal">0</div>
+                <div class="card-bar"><div class="card-bar-fill" id="sBarTotal" data-pct="100"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-glow"></div>
+                <span class="card-icon">🚩</span>
+                <div class="card-label">Fake</div>
+                <div class="card-value" id="sFake">0</div>
+                <div class="card-bar"><div class="card-bar-fill" id="sBarFake"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-glow"></div>
+                <span class="card-icon">✅</span>
+                <div class="card-label">Genuine</div>
+                <div class="card-value" id="sGenuine">0</div>
+                <div class="card-bar"><div class="card-bar-fill" id="sBarGenuine"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-glow"></div>
+                <span class="card-icon">😊</span>
+                <div class="card-label">Positive</div>
+                <div class="card-value" id="sPositive">0</div>
+                <div class="card-bar"><div class="card-bar-fill" id="sBarPositive"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-glow"></div>
+                <span class="card-icon">😠</span>
+                <div class="card-label">Negative</div>
+                <div class="card-value" id="sNegative">0</div>
+                <div class="card-bar"><div class="card-bar-fill" id="sBarNegative"></div></div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">Authenticity</div>
+                <div class="chart-subtitle">Fake vs Genuine</div>
+                <canvas id="bulkFakeChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Sentiment Analysis</div>
+                <div class="chart-subtitle">Positive vs Negative</div>
+                <canvas id="bulkSentimentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RESULTS TABLE ── -->
+    <div class="results-section" id="resultsSection">
+        <div class="section-label">Results</div>
+        <div class="section-title" style="margin-bottom:16px">Per-Review Breakdown</div>
+
+        <div class="filter-row">
+            <button class="pill active" data-filter="all">All</button>
+            <button class="pill" data-filter="genuine">✅ Genuine</button>
+            <button class="pill" data-filter="fake">🚩 Fake</button>
+            <button class="pill" data-filter="positive">😊 Positive</button>
+            <button class="pill" data-filter="negative">😠 Negative</button>
+            <button class="pill" data-filter="high">🔥 High Conf.</button>
+            <button class="export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Review</th>
+                        <th>Verdict</th>
+                        <th>Sentiment</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+/* ══════════════════════════════════════
+   CSRF
+══════════════════════════════════════ */
+function getCSRFToken() {
+    return document.cookie.split('; ')
+        .find(r => r.startsWith('csrftoken='))?.split('=')[1] ?? '';
+}
+
+/* ══════════════════════════════════════
+   TABS
+══════════════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+/* ══════════════════════════════════════
+   SENTIMENT TOGGLE
+══════════════════════════════════════ */
+let doSentiment = false;
+document.getElementById('sentimentToggle').addEventListener('click', () => {
+    doSentiment = !doSentiment;
+    document.getElementById('toggleTrack').classList.toggle('on', doSentiment);
+    document.getElementById('toggleLabel').classList.toggle('on', doSentiment);
+});
+
+/* ══════════════════════════════════════
+   REVIEW COUNT (live from textarea)
+══════════════════════════════════════ */
+function countLines(text) {
+    return text.split('\n').map(l => l.trim()).filter(l => l.length > 0).length;
+}
+document.getElementById('bulkTextarea').addEventListener('input', () => {
+    document.getElementById('reviewCountNum').textContent =
+        countLines(document.getElementById('bulkTextarea').value);
+});
+
+/* ══════════════════════════════════════
+   FILE UPLOAD / DROP
+══════════════════════════════════════ */
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+function handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        let text = e.target.result;
+        // If CSV: take first column of each row
+        if (file.name.endsWith('.csv')) {
+            text = text.split('\n')
+                .map(row => row.split(',')[0].replace(/^"|"$/g, '').trim())
+                .filter(Boolean)
+                .join('\n');
+        }
+        // Switch to paste tab and fill textarea
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-tab="paste"]').classList.add('active');
+        document.getElementById('tab-paste').classList.add('active');
+
+        document.getElementById('bulkTextarea').value = text;
+        document.getElementById('reviewCountNum').textContent = countLines(text);
+        document.getElementById('fileStatus').textContent =
+            `✅ Loaded "${file.name}" — ${countLines(text)} reviews`;
+    };
+    reader.readAsText(file);
+}
+
+/* ══════════════════════════════════════
+   ANIMATED COUNTER
+══════════════════════════════════════ */
+function animateCount(el, target, duration) {
+    duration = duration || 1000;
+    const start = performance.now();
+    const run = now => {
+        const p = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(ease * target).toLocaleString();
+        if (p < 1) requestAnimationFrame(run);
+    };
+    requestAnimationFrame(run);
+}
+
+/* ══════════════════════════════════════
+   CHARTS
+══════════════════════════════════════ */
+Chart.defaults.color       = 'rgba(232,230,240,0.4)';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size   = 11;
+
+const tip = {
+    backgroundColor: '#09090f', borderColor: 'rgba(255,255,255,0.09)', borderWidth: 1,
+    titleColor: '#e8e6f0', bodyColor: 'rgba(232,230,240,0.55)',
+    padding: 12, cornerRadius: 10,
+    titleFont: { family:"'DM Sans',sans-serif", size:12, weight:'500' },
+    bodyFont:  { family:"'DM Sans',sans-serif", size:11 },
+};
+
+let bulkFakeChart = null, bulkSentimentChart = null;
+
+function renderCharts(fake, genuine, positive, negative) {
+    if (bulkFakeChart)      bulkFakeChart.destroy();
+    if (bulkSentimentChart) bulkSentimentChart.destroy();
+
+    bulkFakeChart = new Chart(document.getElementById('bulkFakeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Fake', 'Genuine'],
+            datasets: [{
+                data: [fake, genuine],
+                backgroundColor: ['rgba(192,132,252,.8)', 'rgba(74,222,128,.8)'],
+                borderColor:     ['rgba(192,132,252,1)',  'rgba(74,222,128,1)'],
+                borderWidth: 2, hoverOffset: 10,
+            }]
+        },
+        options: {
+            cutout: '68%',
+            animation: { animateRotate: true, duration: 1000, easing: 'easeOutQuart' },
+            plugins: {
+                legend: { position: 'bottom', labels: { padding:18, usePointStyle:true, pointStyleWidth:10, color:'rgba(232,230,240,0.55)' } },
+                tooltip: { ...tip }
+            }
+        }
+    });
+
+    bulkSentimentChart = new Chart(document.getElementById('bulkSentimentChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Positive', 'Negative'],
+            datasets: [{
+                label: 'Reviews',
+                data: [positive, negative],
+                backgroundColor: ['rgba(124,92,219,.75)', 'rgba(248,113,113,.75)'],
+                borderColor:     ['rgba(124,92,219,1)',   'rgba(248,113,113,1)'],
+                borderWidth: 2, borderRadius: 8, borderSkipped: false,
+            }]
+        },
+        options: {
+            animation: { duration: 1000, easing: 'easeOutQuart', delay: ctx => ctx.dataIndex * 120 },
+            scales: {
+                x: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'rgba(232,230,240,0.35)'}, border:{color:'rgba(255,255,255,0.06)'} },
+                y: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'rgba(232,230,240,0.35)'}, border:{color:'rgba(255,255,255,0.06)'}, beginAtZero:true }
+            },
+            plugins: { legend:{display:false}, tooltip:{...tip} }
+        }
+    });
+}
+
+/* ══════════════════════════════════════
+   BUILD RESULTS TABLE
+══════════════════════════════════════ */
+let allResults = [];
+
+function buildTable(results) {
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+    results.forEach((r, i) => {
+        const confPct = Math.round((r.confidence ?? 0) * 100);
+        const confClass = confPct >= 80 ? 'high' : confPct >= 50 ? 'medium' : 'low';
+        const verdict   = (r.prediction ?? '').toUpperCase();
+        const sentiment = r.sentiment ?? 'pending';
+
+        const tr = document.createElement('tr');
+        tr.className  = 'review-row';
+        tr.dataset.verdict  = verdict.toLowerCase();
+        tr.dataset.conf     = confPct;
+        tr.dataset.sentiment = sentiment.toLowerCase();
+
+        tr.innerHTML = `
+            <td class="row-num">${i + 1}</td>
+            <td><div class="review-text-cell" title="${escHtml(r.text)}">${escHtml(r.text)}</div></td>
+            <td>
+                ${verdict === 'GENUINE'
+                    ? '<span class="badge badge-genuine">✅ Genuine</span>'
+                    : '<span class="badge badge-fake">🚩 Fake</span>'}
+            </td>
+            <td>
+                ${sentiment === 'positive'
+                    ? '<span class="badge badge-positive">😊 Positive</span>'
+                    : sentiment === 'negative'
+                    ? '<span class="badge badge-negative">😠 Negative</span>'
+                    : '<span class="badge badge-pending">— Pending</span>'}
+            </td>
+            <td>
+                <div class="conf-${confClass}">
+                    <div class="conf-bar">
+                        <div class="conf-bar-fill" data-w="${confPct}"></div>
+                    </div>
+                    <div class="conf-num">${confPct}%</div>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Animate confidence bars with stagger
+    tbody.querySelectorAll('.conf-bar-fill[data-w]').forEach((el, i) => {
+        setTimeout(() => { el.style.width = el.dataset.w + '%'; }, 100 + i * 40);
+    });
+}
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════
+   FILTER PILLS
+══════════════════════════════════════ */
+document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', function () {
+        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        const f = this.dataset.filter;
+        document.querySelectorAll('.review-row').forEach(row => {
+            const v    = row.dataset.verdict;
+            const conf = parseFloat(row.dataset.conf);
+            const s    = row.dataset.sentiment;
+            let show = true;
+            if      (f === 'genuine')  show = v === 'genuine';
+            else if (f === 'fake')     show = v === 'fake';
+            else if (f === 'positive') show = s === 'positive';
+            else if (f === 'negative') show = s === 'negative';
+            else if (f === 'high')     show = conf >= 80;
+            row.style.display = show ? '' : 'none';
+        });
+    });
+});
+
+/* ══════════════════════════════════════
+   PROGRESS HELPERS
+══════════════════════════════════════ */
+function setProgress(done, total) {
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent  = pct + '%';
+    document.getElementById('progressText').textContent =
+        `Processing ${done} / ${total} reviews…`;
+}
+
+/* ══════════════════════════════════════
+   MAIN: RUN BULK CHECK
+══════════════════════════════════════ */
+async function runBulkCheck() {
+    const textarea = document.getElementById('bulkTextarea');
+    const reviews  = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    if (reviews.length === 0) {
+        alert('Please enter at least one review.');
+        return;
+    }
+
+    /* UI: loading state */
+    const btn = document.getElementById('runBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    document.getElementById('progressSection').classList.add('visible');
+    setProgress(0, reviews.length);
+
+    try {
+        /* Send all reviews to the bulk API in one request */
+        const res = await fetch('/bulk_pred/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: JSON.stringify({
+                reviews:        reviews,
+                with_sentiment: doSentiment,
+            })
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+
+        allResults = data.results ?? [];
+
+        /* Animate progress to 100% */
+        setProgress(allResults.length, allResults.length);
+
+        /* ── SUMMARY STATS ── */
+        const total    = allResults.length;
+        const fake     = allResults.filter(r => (r.prediction??'').toUpperCase() === 'FAKE').length;
+        const genuine  = total - fake;
+        const positive = allResults.filter(r => r.sentiment === 'positive').length;
+        const negative = allResults.filter(r => r.sentiment === 'negative').length;
+
+        /* Animate cards */
+        document.getElementById('summarySection').classList.add('visible');
+        animateCount(document.getElementById('sTotal'),    total);
+        animateCount(document.getElementById('sFake'),     fake);
+        animateCount(document.getElementById('sGenuine'),  genuine);
+        animateCount(document.getElementById('sPositive'), positive);
+        animateCount(document.getElementById('sNegative'), negative);
+
+        /* Animate card bars */
+        setTimeout(() => {
+            const set = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.style.width = (total > 0 ? (val/total)*100 : 0) + '%';
+            };
+            set('sBarTotal',    total);
+            set('sBarFake',     fake);
+            set('sBarGenuine',  genuine);
+            set('sBarPositive', positive);
+            set('sBarNegative', negative);
+        }, 300);
+
+        /* Charts */
+        renderCharts(fake, genuine, positive, negative);
+
+        /* Results table */
+        document.getElementById('resultsSection').classList.add('visible');
+        buildTable(allResults);
+
+        /* Scroll to results */
+        document.getElementById('summarySection').scrollIntoView({ behavior:'smooth', block:'start' });
+
+    } catch (err) {
+        alert('Error: ' + err.message);
+    } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        setTimeout(() => {
+            document.getElementById('progressSection').classList.remove('visible');
+        }, 800);
+    }
+}
+
+/* ══════════════════════════════════════
+   EXPORT CSV
+══════════════════════════════════════ */
+function exportCSV() {
+    if (!allResults.length) return;
+    const header = 'Review,Verdict,Sentiment,Confidence%\n';
+    const rows   = allResults.map(r => {
+        const conf = Math.round((r.confidence ?? 0) * 100);
+        const text = '"' + String(r.text).replace(/"/g, '""') + '"';
+        return `${text},${r.prediction ?? ''},${r.sentiment ?? ''},${conf}`;
+    }).join('\n');
+
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'bulk_review_results.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>

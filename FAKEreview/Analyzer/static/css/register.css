@@ -1,0 +1,44 @@
+ body { justify-content: center; align-items: center; min-height: 100vh; }
+        .login-wrap { width: 100%; max-width: 440px; padding: 20px; animation: fadeUp 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both; }
+
+        .login-brand { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 32px; text-decoration: none; }
+        .login-brand .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: grid; place-items: center; font-size: 16px; box-shadow: 0 0 18px rgba(124,92,219,0.35); }
+        .login-brand .logo-text { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+
+        .login-heading { text-align: center; margin-bottom: 32px; }
+        .login-heading h1 { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+        .login-heading p { font-size: 0.875rem; color: var(--muted); }
+
+        .field { margin-bottom: 16px; }
+        .field input {
+            width: 100%; padding: 13px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+        }
+
+        .form-error {
+            background: rgba(248,113,113,0.07);
+            border: 1px solid rgba(248,113,113,0.2);
+            border-radius: var(--radius);
+            padding: 11px 14px;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+            border: none;
+        }
+
+        .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; }
+        .divider-line { flex: 1; height: 1px; background: var(--border); }
+        .divider-text { font-size: 0.72rem; color: var(--muted); }
+
+        .register-row { text-align: center; font-size: 0.875rem; }
+        .login-footer { text-align: center; margin-top: 24px; font-size: 0.72rem; color: var(--muted); }

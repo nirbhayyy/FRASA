@@ -1,0 +1,14 @@
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+django
+joblib
+pickle-mixin
+nltk
+django
+djangorestframework
+markdown  
+django-filter
+pillow

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:            #09090f;
+            --bg-grad-1:     rgba(102,70,200,0.2);
+            --bg-grad-2:     rgba(20,140,200,0.13);
+            --surface:       rgba(255,255,255,0.04);
+            --surface-hov:   rgba(255,255,255,0.07);
+            --border:        rgba(255,255,255,0.09);
+            --border-hov:    rgba(255,255,255,0.15);
+            --text:          #e8e6f0;
+            --muted:         rgba(232,230,240,0.4);
+            --accent:        #7c5cdb;
+            --accent2:       #5b8dee;
+            --green:         #4ade80;
+            --red:           #f87171;
+            --accent-blue:   #5b8dee;
+            --accent-pink:   #c084fc;
+            --accent-green:  #4ade80;
+            --accent-orange: #fb923c;
+            --accent-purple: #7c5cdb;
+            --glass:         rgba(255,255,255,0.04);
+            --radius:        12px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+
+        body {
+            background: #09090f;
+            color: #e8e6f0;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(ellipse 70% 50% at 15% 5%,  var(--bg-grad-1) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 85% 95%, var(--bg-grad-2) 0%, transparent 55%);
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(124,92,219,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124,92,219,.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+            animation: gridDrift 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes gridDrift { from { background-position: 0 0 } to { background-position: 48px 48px } }
+
+        /* Radial glow blob */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px; left: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(124,92,219,.15), transparent 70%);
+            animation: blobFloat 8s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes blobFloat { from { transform: translate(0,0) } to { transform: translate(80px,60px) } }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── HEADER RIGHT CLUSTER ── */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Detect button */
+        .btn-detect {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .73rem;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: opacity .2s, transform .2s, box-shadow .2s;
+            box-shadow: 0 4px 20px rgba(124,92,219,.38);
+        }
+        .btn-detect:hover {
+            opacity: .88;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(124,92,219,.5);
+        }
+
+        /* ── PROFILE CHIP ── */
+        .profile-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 5px 14px 5px 5px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+        .profile-chip:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--border-hov);
+            transform: translateY(-1px);
+        }
+
+        /* Avatar image (when profile image exists) */
+        .profile-chip .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid rgba(124,92,219,.45);
+            display: block;
+            flex-shrink: 0;
+        }
+
+        /* Fallback initials circle */
+        .profile-initials {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            letter-spacing: .02em;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-initials::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.18), transparent);
+            pointer-events: none;
+        }
+
+        /* Username text */
+        .profile-name {
+            font-size: .82rem;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        /* ── STAT CARDS ── */
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            padding: 20px;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+            transition: transform .25s cubic-bezier(0.22,1,0.36,1), box-shadow .25s ease, border-color .25s ease;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 2px 0 rgba(255,255,255,0.04) inset, 0 20px 50px rgba(0,0,0,0.25);
+        }
+        .card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,.05), transparent);
+            pointer-events: none;
+        }
+        .card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,.45);
+            border-color: var(--border-hov);
+        }
+        .card-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .card-label {
+            font-size: .72rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .card-value {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+            font-weight: 700;
+            line-height: 1;
+        }
+        .card-bar {
+            margin-top: 12px;
+            height: 3px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .card-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            width: 0;
+            transition: width 1.2s cubic-bezier(.22,1,.36,1);
+        }
+
+        /* Per-card accent colours */
+        .card:nth-child(1) { --c: var(--accent-blue);   }
+        .card:nth-child(2) { --c: var(--accent-pink);   }
+        .card:nth-child(3) { --c: var(--accent-green);  }
+        .card:nth-child(4) { --c: var(--accent-orange); }
+        .card:nth-child(5) { --c: var(--accent-purple); }
+        .card .card-value    { color: var(--c); }
+        .card .card-bar-fill { background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 60%, white)); }
+
+        .card-glow {
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, var(--c), transparent 70%);
+            opacity: .1;
+            pointer-events: none;
+            transition: opacity .3s;
+        }
+        .card:hover .card-glow { opacity: .22; }
+
+        /* ── CHARTS SECTION ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 24px;
+            margin-top: 0;
+        }
+        .chart-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 28px 20px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 0 rgba(255,255,255,0.05) inset, 0 40px 80px rgba(0,0,0,0.18);
+            transition: border-color .25s ease;
+        }
+        .chart-card:hover { border-color: var(--border-hov); }
+        .chart-card::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; right: -60px;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(124,92,219,.1), transparent 70%);
+            pointer-events: none;
+        }
+        .chart-title {
+            font-size: .72rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .chart-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+        .chart-card canvas { margin-top: 0 !important; }
+
+        /* ── ANIMATIONS ── */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp .55s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0);    }
+        }
+        .card { animation: fadeUp .5s cubic-bezier(0.22,1,0.36,1) forwards; opacity:0; }
+        .card:nth-child(1){ animation-delay:.05s }
+        .card:nth-child(2){ animation-delay:.12s }
+        .card:nth-child(3){ animation-delay:.19s }
+        .card:nth-child(4){ animation-delay:.26s }
+        .card:nth-child(5){ animation-delay:.33s }
+        .chart-card { animation: fadeUp .6s cubic-bezier(0.22,1,0.36,1) forwards; opacity:0; }
+        .chart-card:nth-child(1){ animation-delay:.42s }
+        .chart-card:nth-child(2){ animation-delay:.52s }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(124,92,219,.3); border-radius: 3px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .cards { gap: 12px; }
+            .card { min-width: calc(50% - 8px); }
+        }
+        @media (max-width: 540px) {
+            .container { padding: 20px; }
+            .header h1 { font-size: 1.3rem; }
+            .profile-name { display: none; }
+            .header-right { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="header fade-up">
+        <h1>📊 Dashboard</h1>
+
+        <div class="header-right">
+            <!-- Detect button -->
+            <a href="{% url 'check_review' %}" class="btn-detect">🔍&nbsp; Detect Review</a>
+
+            <!-- Profile chip -->
+            <div class="profile-chip">
+                {% if request.user.profile.image %}
+                    <img class="profile-avatar"
+                         src="{{ request.user.profile.image.url }}"
+                         alt="{{ request.user.username }}">
+                {% else %}
+                    <div class="profile-initials">
+                        {{ request.user.username|slice:":2"|upper }}
+                    </div>
+                {% endif %}
+                <span class="profile-name">{{ request.user.username }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="cards">
+
+        <div class="card">
+            <div class="card-glow"></div>
+            <span class="card-icon">🗂️</span>
+            <div class="card-label">Total Reviews</div>
+            <div class="card-value" data-count="{{ total }}">{{ total }}</div>
+            <div class="card-bar"><div class="card-bar-fill" data-pct="100"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-glow"></div>
+            <span class="card-icon">🚩</span>
+            <div class="card-label">Fake</div>
+            <div class="card-value" data-count="{{ fake }}">{{ fake }}</div>
+            <div class="card-bar"><div class="card-bar-fill" data-rel="fake"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-glow"></div>
+            <span class="card-icon">✅</span>
+            <div class="card-label">Genuine</div>
+            <div class="card-value" data-count="{{ genuine }}">{{ genuine }}</div>
+            <div class="card-bar"><div class="card-bar-fill" data-rel="genuine"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-glow"></div>
+            <span class="card-icon">😊</span>
+            <div class="card-label">Positive</div>
+            <div class="card-value" data-count="{{ positive }}">{{ positive }}</div>
+            <div class="card-bar"><div class="card-bar-fill" data-rel="positive"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-glow"></div>
+            <span class="card-icon">😠</span>
+            <div class="card-label">Negative</div>
+            <div class="card-value" data-count="{{ negative }}">{{ negative }}</div>
+            <div class="card-bar"><div class="card-bar-fill" data-rel="negative"></div></div>
+        </div>
+
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+
+        <div class="chart-card">
+            <div class="chart-title">Authenticity</div>
+            <div class="chart-subtitle">Fake vs Genuine</div>
+            <canvas id="fakeChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">Sentiment Analysis</div>
+            <div class="chart-subtitle">Positive vs Negative</div>
+            <canvas id="sentimentChart"></canvas>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    /* ─── DATA (Django template vars) ─── */
+    const DATA = {
+        total:    {{ total }},
+        fake:     {{ fake }},
+        genuine:  {{ genuine }},
+        positive: {{ positive }},
+        negative: {{ negative }},
+    };
+
+    /* ─── ANIMATED COUNTERS ─── */
+    function animateCount(el, target, duration = 1200) {
+        const start = performance.now();
+        const update = (now) => {
+            const p = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - p, 3);
+            el.textContent = Math.round(ease * target).toLocaleString();
+            if (p < 1) requestAnimationFrame(update);
+        };
+        requestAnimationFrame(update);
+    }
+    document.querySelectorAll('[data-count]').forEach(el => {
+        animateCount(el, parseInt(el.dataset.count) || 0);
+    });
+
+    /* ─── PROGRESS BARS ─── */
+    window.addEventListener('load', () => {
+        document.querySelectorAll('.card-bar-fill').forEach(bar => {
+            const key = bar.dataset.rel;
+            const pct = bar.dataset.pct
+                ? parseFloat(bar.dataset.pct)
+                : DATA.total > 0 ? (DATA[key] / DATA.total) * 100 : 0;
+            setTimeout(() => bar.style.width = pct + '%', 300);
+        });
+    });
+
+    /* ─── CHART DEFAULTS ─── */
+    Chart.defaults.color = 'rgba(232,230,240,0.4)';
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.font.weight = '400';
+
+    const tooltipPlugin = {
+        backgroundColor: '#09090f',
+        borderColor: 'rgba(255,255,255,0.09)',
+        borderWidth: 1,
+        titleColor: '#e8e6f0',
+        bodyColor: 'rgba(232,230,240,0.55)',
+        padding: 12,
+        cornerRadius: 10,
+        titleFont: { family: "'DM Sans', sans-serif", size:12, weight:'500' },
+        bodyFont:  { family: "'DM Sans', sans-serif", size:11 },
+    };
+
+    /* ─── PIE CHART ─── */
+    new Chart(document.getElementById('fakeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Fake', 'Genuine'],
+            datasets: [{
+                data: [DATA.fake, DATA.genuine],
+                backgroundColor: ['rgba(192,132,252,.8)', 'rgba(74,222,128,.8)'],
+                borderColor:     ['rgba(192,132,252,1)',  'rgba(74,222,128,1)'],
+                borderWidth: 2,
+                hoverOffset: 10,
+            }]
+        },
+        options: {
+            cutout: '68%',
+            animation: { animateRotate: true, duration: 1000, easing: 'easeOutQuart' },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding:18, usePointStyle:true, pointStyleWidth:10, color:'rgba(232,230,240,0.55)' }
+                },
+                tooltip: { ...tooltipPlugin }
+            }
+        }
+    });
+
+    /* ─── BAR CHART ─── */
+    new Chart(document.getElementById('sentimentChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Positive', 'Negative'],
+            datasets: [{
+                label: 'Reviews',
+                data: [DATA.positive, DATA.negative],
+                backgroundColor: ['rgba(124,92,219,.75)', 'rgba(248,113,113,.75)'],
+                borderColor:     ['rgba(124,92,219,1)',   'rgba(248,113,113,1)'],
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            animation: { duration: 1000, easing: 'easeOutQuart', delay: ctx => ctx.dataIndex * 120 },
+            scales: {
+                x: {
+                    grid:   { color: 'rgba(255,255,255,.04)' },
+                    ticks:  { color: 'rgba(232,230,240,0.35)' },
+                    border: { color: 'rgba(255,255,255,0.06)' },
+                },
+                y: {
+                    grid:   { color: 'rgba(255,255,255,.04)' },
+                    ticks:  { color: 'rgba(232,230,240,0.35)' },
+                    border: { color: 'rgba(255,255,255,0.06)' },
+                    beginAtZero: true,
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { ...tooltipPlugin }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

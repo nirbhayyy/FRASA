@@ -1,0 +1,147 @@
+/* ── Page layout: centre vertically ── */
+        body {
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-wrap {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            animation: fadeUp 0.6s 0.1s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        /* ── Brand ── */
+        .login-brand {
+            display: flex; align-items: center; gap: 10px;
+            justify-content: center;
+            margin-bottom: 32px;
+            text-decoration: none;
+        }
+
+        .login-brand .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 10px;
+            display: grid; place-items: center;
+            font-size: 16px;
+            box-shadow: 0 0 18px rgba(124,92,219,0.35);
+        }
+
+        .login-brand .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem; font-weight: 700;
+            color: var(--text); letter-spacing: -0.01em;
+        }
+
+        /* ── Card heading ── */
+        .login-heading {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-heading h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem; font-weight: 900;
+            color: var(--text); letter-spacing: -0.03em;
+            line-height: 1.15; margin-bottom: 8px;
+        }
+
+        .login-heading p {
+            font-size: 0.875rem;
+            color: var(--muted); line-height: 1.6;
+        }
+
+        /* ── Fields ── */
+        .field { margin-bottom: 16px; }
+
+        .field .input-label { margin-bottom: 8px; }
+
+        .field input {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9375rem; font-weight: 300;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.35s;
+        }
+
+        .field input::placeholder { color: var(--muted); opacity: 0.6; }
+
+        .field input:focus {
+            border-color: rgba(124,92,219,0.55);
+            box-shadow: 0 0 0 3px rgba(124,92,219,0.12);
+        }
+
+        /* ── Errors ── */
+        .field-error {
+            font-size: 0.75rem; color: var(--red);
+            margin-top: 6px;
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        .form-error {
+            background: rgba(248,113,113,0.07);
+            border: 1px solid rgba(248,113,113,0.2);
+            border-radius: var(--radius);
+            padding: 11px 14px;
+            font-size: 0.82rem; color: var(--red);
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 8px;
+            animation: resultReveal 0.4s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        /* ── Submit — mirrors .btn-primary from style.css ── */
+        .btn-submit {
+            width: 100%;
+            padding: 13px 20px;
+            margin-top: 6px; border: none;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9375rem; font-weight: 500;
+            letter-spacing: 0.02em; cursor: pointer;
+            display: flex; align-items: center;
+            justify-content: center; gap: 7px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(124,92,219,0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-submit:hover  { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(124,92,219,0.5); }
+        .btn-submit:active { transform: translateY(0); }
+
+        /* ── Divider ── */
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin: 22px 0;
+        }
+        .divider-line  { flex: 1; height: 1px; background: var(--border); }
+        .divider-text  { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+        /* ── Register link ── */
+        .register-row {
+            text-align: center;
+            font-size: 0.875rem; color: var(--muted);
+        }
+        .register-row a {
+            color: var(--accent2); text-decoration: none;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .register-row a:hover { color: var(--text); }
+
+        /* ── Footer tag ── */
+        .login-footer {
+            text-align: center; margin-top: 24px;
+            font-size: 0.72rem; color: var(--muted); opacity: 0.5;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 480px) {
+            .login-wrap { padding: 16px; }
+            .card { padding: 28px 20px; }
+        }

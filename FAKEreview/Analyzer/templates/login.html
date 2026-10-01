@@ -1,0 +1,104 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — FRASA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        
+    </style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+    <!-- Brand -->
+    <a href="/" class="login-brand">
+        <div class="logo-icon">🔍</div>
+        <span class="logo-text">FRASA</span>
+    </a>
+
+    <!-- Card — reuses .card from style.css -->
+    <div class="card">
+
+        <div class="login-heading">
+            <h1>Welcome <span class="gradient-text">back</span></h1>
+            <p>Sign in to continue analysing reviews.</p>
+        </div>
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+        <div class="form-error">
+            ⚠️ {{ form.non_field_errors|join:", " }}
+        </div>
+        {% endif %}
+
+        <form method="POST" autocomplete="off">
+            {% csrf_token %}
+
+            <div class="field">
+                <label class="input-label" for="id_username">Username</label>
+                <input
+                    type="text"
+                    id="id_username"
+                    name="username"
+                    placeholder="your_username"
+                    value="{{ form.username.value|default:'' }}"
+                    required
+                >
+                {% if form.username.errors %}
+                    <div class="field-error">⚠️ {{ form.username.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <div class="field">
+                <label class="input-label" for="id_password">Password</label>
+                <input
+                    type="password"
+                    id="id_password"
+                    name="password"
+                    placeholder="••••••••"
+                    required
+                >
+                {% if form.password.errors %}
+                    <div class="field-error">⚠️ {{ form.password.errors|join:", " }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <span class="btn-icon">⚡</span> Sign in
+            </button>
+        </form>
+
+        <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">or</span>
+            <div class="divider-line"></div>
+        </div>
+
+        <div class="register-row">
+            Don't have an account? <a href="{% url 'register' %}">Create one →</a>
+        </div>
+
+    </div>
+
+    <div class="login-footer">FRASA · v2.2 · Secure</div>
+
+</div>
+
+<!-- Restore saved theme (same as script.js) -->
+<script>
+(function () {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') document.body.classList.add('light');
+})();
+</script>
+
+</body>
+</html>
